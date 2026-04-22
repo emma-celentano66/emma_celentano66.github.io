@@ -1,5 +1,5 @@
 const REVIEW_STORAGE_KEY = "turning-pages-reviews";
-const NO_COVER_SRC = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='300' viewBox='0 0 200 300'%3E%3Crect fill='%238686AC' width='200' height='300'/%3E%3Ctext x='100' y='145' font-family='Arial' font-size='14' fill='%23F4F5FF' text-anchor='middle'%3ENo Cover%3C/text%3E%3C/svg%3E";
+const NO_COVER_SRC = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='300' viewBox='0 0 200 300'%3E%3Crect fill='%239B7A5C' width='200' height='300'/%3E%3Ctext x='100' y='145' font-family='Arial' font-size='14' fill='%23FFF6E8' text-anchor='middle'%3ENo Cover%3C/text%3E%3C/svg%3E";
 
 const reviewForm = document.getElementById("review-form");
 const prefillNote = document.getElementById("review-prefill-note");
