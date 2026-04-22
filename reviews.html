@@ -4,8 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reviews - Turning Pages</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="is-loading">
+
+    <div id="site-loader" class="global-loader" role="status" aria-live="polite" aria-hidden="false">
+        <div class="book-loader" aria-hidden="true">
+            <div class="book-base"></div>
+            <div class="book-page page-one"></div>
+            <div class="book-page page-two"></div>
+            <div class="book-page page-three"></div>
+        </div>
+        <p id="site-loader-text" class="loader-text">Turning pages...</p>
+    </div>
 
     <nav>
         <ul>
@@ -16,6 +27,51 @@
             <li><a href="goals.html">Goals</a></li>
         </ul>
     </nav>
+
+    <main>
+        <section>
+            <h2>Leave a Review</h2>
+            <p id="review-prefill-note" class="review-prefill-note">Choose a book from Discover, then leave your review here.</p>
+
+            <form id="review-form" class="review-form">
+                <input id="review-id" name="reviewId" type="hidden">
+                <input id="review-cover-url" name="coverUrl" type="hidden">
+
+                <label for="review-book-title">Book Title</label>
+                <input id="review-book-title" name="title" type="text" required>
+
+                <label for="review-book-author">Author</label>
+                <input id="review-book-author" name="author" type="text" required>
+
+                <label id="review-rating-label" for="review-rating">Rating</label>
+                <input id="review-rating" name="rating" type="hidden" value="">
+                <div class="star-rating" role="radiogroup" aria-labelledby="review-rating-label">
+                    <button type="button" class="star-btn" data-value="1" aria-label="1 star" aria-pressed="false">☆</button>
+                    <button type="button" class="star-btn" data-value="2" aria-label="2 stars" aria-pressed="false">☆</button>
+                    <button type="button" class="star-btn" data-value="3" aria-label="3 stars" aria-pressed="false">☆</button>
+                    <button type="button" class="star-btn" data-value="4" aria-label="4 stars" aria-pressed="false">☆</button>
+                    <button type="button" class="star-btn" data-value="5" aria-label="5 stars" aria-pressed="false">☆</button>
+                </div>
+                <p id="star-rating-status" class="star-rating-status" aria-live="polite">No rating selected</p>
+
+                <label for="review-text">Review</label>
+                <textarea id="review-text" name="review" rows="5" placeholder="Share your thoughts..." required></textarea>
+
+                <div class="review-form-actions">
+                    <button id="review-submit-btn" type="submit">Save Review</button>
+                    <button id="review-cancel-edit-btn" type="button" class="secondary-action" hidden>Cancel Edit</button>
+                </div>
+            </form>
+        </section>
+
+        <section>
+            <h2>Your Saved Reviews</h2>
+            <div id="saved-reviews" class="saved-reviews"></div>
+        </section>
+    </main>
+
+    <script src="main.js"></script>
+    <script src="reviews.js"></script>
 
 </body>
 </html>

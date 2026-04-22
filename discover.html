@@ -4,8 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discover - Turning Pages</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="is-loading">
+
+    <div id="site-loader" class="global-loader" role="status" aria-live="polite" aria-hidden="false">
+        <div class="book-loader" aria-hidden="true">
+            <div class="book-base"></div>
+            <div class="book-page page-one"></div>
+            <div class="book-page page-two"></div>
+            <div class="book-page page-three"></div>
+        </div>
+        <p id="site-loader-text" class="loader-text">Turning pages...</p>
+    </div>
 
     <nav>
         <ul>
@@ -20,10 +31,42 @@
     <main>
         <section>
             <h2>Discover Books</h2>
-            <p>Browse and explore new books to add to your reading list.</p>
-            <p><a href="reviews.html">See Reviews</a></p>
+            <p>Search Open Library by title, author, keyword, genre, or both.</p>
+
+            <form id="book-search-form" class="search-form" autocomplete="off">
+                <label for="book-search-input">Search by title, author, or keyword</label>
+                <div class="search-row">
+                    <input id="book-search-input" name="q" type="search" placeholder="Ex: Pride and Prejudice">
+                    <select id="book-genre-input" class="genre-input" name="genre">
+                        <option value="">Genre (optional)</option>
+                        <option value="Fantasy">Fantasy</option>
+                        <option value="Romance">Romance</option>
+                        <option value="Mystery">Mystery</option>
+                        <option value="Thriller">Thriller</option>
+                        <option value="Science Fiction">Science Fiction</option>
+                        <option value="Historical Fiction">Historical Fiction</option>
+                        <option value="Young Adult">Young Adult</option>
+                        <option value="Horror">Horror</option>
+                        <option value="Biography">Biography</option>
+                    </select>
+                    <button type="submit">Search</button>
+                </div>
+            </form>
+
+            <p id="search-status" class="search-status" aria-live="polite">Enter a search term, pick a genre, or both.</p>
+            <div id="book-results" class="book-results" aria-live="polite"></div>
         </section>
     </main>
+
+    <div id="book-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <button id="modal-close" class="modal-close" type="button" aria-label="Close book details">Close</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script src="discover.js"></script>
 
 </body>
 </html>
