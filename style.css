@@ -381,7 +381,6 @@ a:focus-visible {
 	text-align: left;
 	background: rgba(58, 42, 34, 0.62);
 	color: var(--text-light);
-	cursor: pointer;
 	transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
@@ -414,6 +413,129 @@ a:focus-visible {
 .card-year {
 	margin-top: 0.3rem;
 	color: var(--blue-soft);
+}
+
+.book-card-actions {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.45rem;
+	margin-top: 0.7rem;
+}
+
+.book-card-action {
+	width: 100%;
+	padding: 0.58rem 0.72rem;
+	border-radius: 8px;
+	border: 1px solid rgba(212, 180, 139, 0.5);
+	background: rgba(58, 42, 34, 0.8);
+	color: var(--text-light);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.book-card-action:hover,
+.book-card-action:focus-visible {
+	background: var(--blue-mid);
+}
+
+.add-pages-turned-button {
+	background: var(--accent-honey);
+	color: var(--accent-ink);
+	border-color: rgba(244, 221, 185, 0.45);
+}
+
+.add-pages-turned-button:hover,
+.add-pages-turned-button:focus-visible {
+	background: var(--accent-cream);
+	color: var(--accent-ink);
+}
+
+.bookshelf-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+	gap: 1rem;
+	padding-top: 0.35rem;
+	background:
+		repeating-linear-gradient(
+			to bottom,
+			rgba(83, 58, 42, 0.3) 0,
+			rgba(83, 58, 42, 0.3) 168px,
+			rgba(156, 119, 87, 0.35) 168px,
+			rgba(156, 119, 87, 0.35) 176px
+		);
+	border-radius: 10px;
+	padding: 0.8rem;
+}
+
+.shelf-book-card {
+	padding: 0.65rem;
+	border-radius: 10px;
+	background: rgba(58, 42, 34, 0.86);
+	border: 1px solid rgba(212, 180, 139, 0.35);
+	box-shadow: 0 6px 14px rgba(32, 22, 16, 0.3);
+	cursor: pointer;
+	transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.shelf-book-card:hover,
+.shelf-book-card:focus-visible {
+	transform: translateY(-2px);
+	border-color: var(--blue-soft);
+	outline: none;
+}
+
+.shelf-book-cover {
+	width: 100%;
+	height: 220px;
+	object-fit: cover;
+	border-radius: 8px;
+	background: var(--blue-mid);
+}
+
+.shelf-book-card h3 {
+	margin: 0.62rem 0 0.42rem;
+	font-size: 0.98rem;
+	line-height: 1.34;
+}
+
+.shelf-book-card p {
+	margin: 0;
+	font-size: 0.85rem;
+}
+
+.shelf-book-year {
+	margin-top: 0.28rem;
+	color: var(--blue-soft);
+}
+
+.shelf-review-detail {
+	display: grid;
+	grid-template-columns: 220px 1fr;
+	gap: 1rem;
+	margin-top: 0.7rem;
+}
+
+.shelf-review-author {
+	margin: 0;
+	color: var(--blue-soft);
+	font-weight: 700;
+}
+
+.shelf-review-rating {
+	margin: 0.45rem 0 0.5rem;
+	color: #ffd15a;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+}
+
+.shelf-review-text {
+	margin: 0;
+}
+
+.shelf-review-date {
+	margin-top: 0.55rem;
+	font-size: 0.9rem;
+	color: var(--text-muted);
 }
 
 .modal {
@@ -496,6 +618,11 @@ a:focus-visible {
 	background: var(--accent-cream);
 	transform: translateY(-1px);
 	color: var(--accent-ink);
+}
+
+.modal-add-pages-turned {
+	display: inline-block;
+	margin-right: 0.55rem;
 }
 
 .review-prefill-note {
@@ -746,6 +873,142 @@ a:focus-visible {
 	color: #FFF0F7;
 }
 
+.goals-helper-text {
+	margin-bottom: 0.85rem;
+}
+
+.goals-form {
+	display: grid;
+	gap: 0.6rem;
+	margin-bottom: 1rem;
+}
+
+.goals-form label {
+	font-weight: 700;
+	color: var(--text-light);
+}
+
+.goals-form input {
+	width: 100%;
+	padding: 0.72rem 0.8rem;
+	border-radius: 8px;
+	border: 1px solid var(--blue-soft);
+	background: rgba(58, 42, 34, 0.72);
+	color: var(--text-light);
+	font: inherit;
+}
+
+.goals-form button {
+	justify-self: start;
+	padding: 0.68rem 1rem;
+	border: 0;
+	border-radius: 8px;
+	background: var(--accent-honey);
+	color: var(--accent-ink);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.goals-form button:hover,
+.goals-form button:focus-visible {
+	background: var(--accent-cream);
+}
+
+.goals-form .secondary-action {
+	background: rgba(58, 42, 34, 0.8);
+	color: var(--text-light);
+	border: 1px solid var(--blue-soft);
+}
+
+.goals-form .secondary-action:hover,
+.goals-form .secondary-action:focus-visible {
+	background: var(--blue-mid);
+	color: var(--text-light);
+}
+
+.goals-inline-fields {
+	display: grid;
+	gap: 0.55rem;
+}
+
+.goal-progress-panel {
+	padding: 0.9rem;
+	border-radius: 10px;
+	background: rgba(58, 42, 34, 0.52);
+	border: 1px solid rgba(212, 180, 139, 0.35);
+}
+
+.goal-summary {
+	margin: 0 0 0.55rem;
+	font-weight: 700;
+	color: var(--text-light);
+}
+
+.goal-progress-track {
+	width: 100%;
+	height: 14px;
+	border-radius: 999px;
+	background: rgba(212, 180, 139, 0.25);
+	overflow: hidden;
+}
+
+.goal-progress-bar {
+	height: 100%;
+	width: 0%;
+	background: linear-gradient(90deg, #D7A357, #F4DDB9);
+	transition: width 0.28s ease;
+}
+
+.goal-percent {
+	margin: 0.55rem 0 0;
+	color: var(--text-muted);
+	font-size: 0.9rem;
+}
+
+.goals-reset-section {
+	margin-top: 1.5rem;
+	text-align: center;
+}
+
+.danger-action {
+	padding: 0.55rem 1.4rem;
+	border-radius: 8px;
+	border: 1px solid rgba(200, 60, 60, 0.7);
+	background: rgba(140, 30, 30, 0.75);
+	color: var(--text-light);
+	font-weight: 700;
+	cursor: pointer;
+	font-size: 0.95rem;
+}
+
+.danger-action:hover,
+.danger-action:focus-visible {
+	background: rgba(180, 40, 40, 0.95);
+}
+
+.goal-ideas {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.55rem;
+	margin-bottom: 0.9rem;
+}
+
+.goal-idea-chip {
+	padding: 0.48rem 0.7rem;
+	border-radius: 999px;
+	border: 1px solid rgba(212, 180, 139, 0.6);
+	background: rgba(58, 42, 34, 0.76);
+	color: var(--text-light);
+	cursor: pointer;
+	font-weight: 700;
+	font-size: 0.84rem;
+}
+
+.goal-idea-chip:hover,
+.goal-idea-chip:focus-visible {
+	background: var(--blue-mid);
+}
+
 @media (max-width: 640px) {
 	header {
 		padding-top: 1.4rem;
@@ -773,6 +1036,14 @@ a:focus-visible {
 		height: 190px;
 	}
 
+	.shelf-book-cover {
+		height: 190px;
+	}
+
+	.shelf-review-detail {
+		grid-template-columns: 1fr;
+	}
+
 	.book-detail {
 		grid-template-columns: 1fr;
 	}
@@ -788,5 +1059,9 @@ a:focus-visible {
 	.saved-review-cover {
 		width: 110px;
 		height: 160px;
+	}
+
+	.goal-ideas {
+		gap: 0.45rem;
 	}
 }

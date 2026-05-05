@@ -3,18 +3,14 @@ const searchInput = document.getElementById("book-search-input");
 const genreInput = document.getElementById("book-genre-input");
 const searchStatus = document.getElementById("search-status");
 const resultsContainer = document.getElementById("book-results");
-const topBooksStatus = document.getElementById("top-books-status");
-const topBooksContainer = document.getElementById("top-books-results");
-const refreshTopBooksButton = document.getElementById("refresh-top-books");
-
 const modal = document.getElementById("book-modal");
 const modalBody = document.getElementById("modal-body");
 const modalCloseBtn = document.getElementById("modal-close");
 
 const SEARCH_LIMIT = 24;
-const TOP_BOOKS_LIMIT = 10;
 const GOOGLE_SEARCH_LIMIT = 40;
 const NO_COVER_SRC = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='300' viewBox='0 0 200 300'%3E%3Crect fill='%239B7A5C' width='200' height='300'/%3E%3Ctext x='100' y='145' font-family='Arial' font-size='14' fill='%23FFF6E8' text-anchor='middle'%3ENo Cover%3C/text%3E%3C/svg%3E";
+const PAGES_TURNED_STORAGE_KEY = "turningPagesBookshelf";
 let modalRequestId = 0;
 
 function beginLoad(message) {
@@ -81,15 +77,64 @@ function clearResults() {
     resultsContainer.innerHTML = "";
 }
 
+function getStoredPagesTurnedBooks() {
+    try {
+        const raw = localStorage.getItem(PAGES_TURNED_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function normalizeBookId(doc) {
+    if (doc.source === "google" && doc.googleVolumeId) {
+        return `google:${doc.googleVolumeId}`;
+    }
+    if (doc.key) {
+        return `openlibrary:${doc.key}`;
+    }
+
+    const title = String(doc.title || "untitled").toLowerCase().trim();
+    const author = String(asArray(doc.author_name)[0] || "unknown").toLowerCase().trim();
+    return `fallback:${title}::${author}`;
+}
+
+function saveBookToPagesTurned(doc) {
+    const stored = getStoredPagesTurnedBooks();
+    const bookId = normalizeBookId(doc);
+    const existingIndex = stored.findIndex((book) => book.id === bookId);
+
+    const shelfBook = {
+        id: bookId,
+        title: sanitizeText(doc.title),
+        author: sanitizeText(asArray(doc.author_name).join(", ")),
+        publishYear: sanitizeText(getPublishYear(doc) || doc.first_publish_year),
+        cover: coverUrlFromDoc(doc, "M"),
+        addedAt: new Date().toISOString()
+    };
+
+    if (existingIndex >= 0) {
+        stored.splice(existingIndex, 1);
+    }
+
+    stored.unshift(shelfBook);
+    localStorage.setItem(PAGES_TURNED_STORAGE_KEY, JSON.stringify(stored));
+}
+
+function addToPagesTurnedAndRedirect(doc) {
+    saveBookToPagesTurned(doc);
+    window.location.href = "pagesTurned.html";
+}
+
 function setStatus(message) {
     searchStatus.textContent = message;
 }
 
 function createBookCard(doc) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "book-card";
-    button.dataset.key = doc.key || "";
+    const card = document.createElement("article");
+    card.className = "book-card";
+    card.dataset.key = doc.key || "";
 
     const cover = document.createElement("img");
     cover.src = coverUrlFromDoc(doc, "M");
@@ -110,10 +155,25 @@ function createBookCard(doc) {
     year.className = "card-year";
     year.textContent = `First published: ${sanitizeText(doc.first_publish_year)}`;
 
-    button.append(cover, title, author, year);
-    button.addEventListener("click", () => openBookModal(doc));
+    const actions = document.createElement("div");
+    actions.className = "book-card-actions";
 
-    return button;
+    const detailsButton = document.createElement("button");
+    detailsButton.type = "button";
+    detailsButton.className = "book-card-action";
+    detailsButton.textContent = "View Details";
+    detailsButton.addEventListener("click", () => openBookModal(doc));
+
+    const addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "book-card-action add-pages-turned-button";
+    addButton.textContent = "Add to Pages Turned";
+    addButton.addEventListener("click", () => addToPagesTurnedAndRedirect(doc));
+
+    actions.append(detailsButton, addButton);
+    card.append(cover, title, author, year, actions);
+
+    return card;
 }
 
 function renderCards(docs) {
@@ -131,12 +191,6 @@ function renderCards(docs) {
 
     resultsContainer.appendChild(fragment);
     setStatus(`Showing ${docs.length} result${docs.length === 1 ? "" : "s"}.`);
-}
-
-function setTopBooksStatus(message) {
-    if (topBooksStatus) {
-        topBooksStatus.textContent = message;
-    }
 }
 
 function normalizeTrendingWork(work) {
@@ -453,120 +507,6 @@ async function fetchOpenLibrarySearchResults(query, genre) {
         .slice(0, SEARCH_LIMIT);
 }
 
-async function fetchGoogleTopBooks() {
-    try {
-        // Search for recent releases across multiple genres to get variety
-        const genres = ["romance", "mystery", "sci-fi", "fantasy", "thriller"];
-        const allBooks = [];
-
-        for (const genre of genres) {
-            const params = new URLSearchParams({
-                q: `${genre}`,
-                maxResults: "8",
-                orderBy: "newest",
-                printType: "books"
-            });
-
-            const response = await fetch(`https://www.googleapis.com/books/v1/volumes?${params.toString()}`);
-
-            if (response.ok) {
-                const data = await response.json();
-                const items = Array.isArray(data.items) ? data.items : [];
-                items.forEach(item => {
-                    allBooks.push(normalizeGoogleBookItem(item));
-                });
-            }
-        }
-
-        // Remove duplicates and return top 10
-        const uniqueBooks = [];
-        const seenIds = new Set();
-        
-        for (const book of allBooks) {
-            if (!seenIds.has(book.googleVolumeId)) {
-                uniqueBooks.push(book);
-                seenIds.add(book.googleVolumeId);
-                if (uniqueBooks.length >= TOP_BOOKS_LIMIT) break;
-            }
-        }
-
-        return uniqueBooks.slice(0, TOP_BOOKS_LIMIT);
-    } catch (error) {
-        return [];
-    }
-}
-
-async function fetchTopBooks() {
-    if (!topBooksContainer) {
-        return;
-    }
-
-    topBooksContainer.innerHTML = "";
-    setTopBooksStatus("Loading top books...");
-
-    beginLoad("Loading top books...");
-
-    try {
-        // Try Google Books first
-        let books = await fetchGoogleTopBooks();
-        let usedSource = "google";
-
-        // Fall back to Open Library trending if Google has no results
-        if (!books.length) {
-            const trendingResponse = await fetch(
-                `https://openlibrary.org/trending/daily.json?limit=${TOP_BOOKS_LIMIT}`
-            );
-
-            if (trendingResponse.ok) {
-                const trendingData = await trendingResponse.json();
-                books = Array.isArray(trendingData.works)
-                    ? trendingData.works.slice(0, TOP_BOOKS_LIMIT).map(normalizeTrendingWork)
-                    : [];
-                usedSource = "openlibrary-trending";
-            }
-        }
-
-        // Fall back to Open Library bestseller search if still no results
-        if (!books.length) {
-            const fallbackResponse = await fetch(
-                `https://openlibrary.org/search.json?q=bestseller&limit=${TOP_BOOKS_LIMIT}`
-            );
-
-            if (!fallbackResponse.ok) {
-                throw new Error("Top books failed");
-            }
-
-            const fallbackData = await fallbackResponse.json();
-            const fallbackDocs = Array.isArray(fallbackData.docs) ? fallbackData.docs : [];
-            books = fallbackDocs.slice(0, TOP_BOOKS_LIMIT).map(normalizeOpenLibraryDoc);
-            usedSource = "openlibrary-bestseller";
-        }
-
-        if (!books.length) {
-            setTopBooksStatus("No top books available right now.");
-            return;
-        }
-
-        const fragment = document.createDocumentFragment();
-        books.forEach((book) => {
-            fragment.appendChild(createBookCard(book));
-        });
-        topBooksContainer.appendChild(fragment);
-
-        if (usedSource === "google") {
-            setTopBooksStatus("Showing the current Top 10 from Google Books bestsellers.");
-        } else if (usedSource === "openlibrary-trending") {
-            setTopBooksStatus("Showing the current Top 10 from Open Library trending data.");
-        } else {
-            setTopBooksStatus("Showing a bestseller-style list from Open Library.");
-        }
-    } catch (error) {
-        setTopBooksStatus("Could not load top books right now. Please try again shortly.");
-    } finally {
-        endLoad();
-    }
-}
-
 function detailItem(label, value) {
     return `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(sanitizeText(value))}</li>`;
 }
@@ -586,6 +526,7 @@ function renderModalContent(doc, description, subjectList) {
     const safeSubjects = subjectList.length ? subjectList.join(", ") : "Not available";
     const reviewLink = reviewLinkForDoc(doc);
     const coverUrl = coverUrlFromDoc(doc, "L");
+    const modalBookId = normalizeBookId(doc);
 
     modalBody.innerHTML = `
         <article class="book-detail">
@@ -602,6 +543,7 @@ function renderModalContent(doc, description, subjectList) {
                     ${detailItem("ISBN(s)", asArray(doc.isbn).slice(0, 5))}
                     ${detailItem("Subjects", safeSubjects)}
                 </ul>
+                <button class="review-link-button add-pages-turned-button modal-add-pages-turned" type="button" data-book-id="${escapeHtml(modalBookId)}">Add to Pages Turned</button>
                 <a class="review-link-button" href="${reviewLink}">Leave a Review</a>
             </div>
         </article>
@@ -613,6 +555,11 @@ function renderModalContent(doc, description, subjectList) {
         modalCoverImg.onerror = function() {
             this.src = NO_COVER_SRC;
         };
+    }
+
+    const addToPagesTurnedButton = modalBody.querySelector(".modal-add-pages-turned");
+    if (addToPagesTurnedButton) {
+        addToPagesTurnedButton.addEventListener("click", () => addToPagesTurnedAndRedirect(doc));
     }
 }
 

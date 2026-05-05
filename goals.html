@@ -28,7 +28,81 @@
         </ul>
     </nav>
 
+    <main>
+        <section>
+            <h2>Monthly Reading Goal</h2>
+            <p class="goals-helper-text">Set a target for books finished this month and track your progress.</p>
+
+            <form id="monthly-goal-form" class="goals-form" autocomplete="off">
+                <label for="monthly-goal-target">Books to read this month</label>
+                <input id="monthly-goal-target" name="target" type="number" min="1" step="1" required>
+
+                <div class="goals-inline-fields">
+                    <label for="monthly-goal-current">Books finished so far</label>
+                    <input id="monthly-goal-current" name="current" type="number" min="0" step="1" required>
+                </div>
+
+                <button type="submit">Save Monthly Goal</button>
+                <button id="monthly-goal-add-one" type="button" class="secondary-action">+1 Book Finished</button>
+            </form>
+
+            <div class="goal-progress-panel" aria-live="polite">
+                <p id="monthly-goal-summary" class="goal-summary">No monthly goal saved yet.</p>
+                <div class="goal-progress-track" role="img" aria-label="Monthly reading progress">
+                    <div id="monthly-goal-progress" class="goal-progress-bar"></div>
+                </div>
+                <p id="monthly-goal-percent" class="goal-percent">0% complete</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Second Goal Tracker</h2>
+            <p class="goals-helper-text">Pick an idea below or create your own custom reading habit goal.</p>
+
+            <div class="goal-ideas" aria-label="Goal ideas">
+                <button type="button" class="goal-idea-chip" data-name="Pages Read" data-unit="pages" data-target="600">Pages Read (example: 600 pages/month)</button>
+                <button type="button" class="goal-idea-chip" data-name="Reading Minutes" data-unit="minutes" data-target="900">Reading Minutes (example: 900 minutes/month)</button>
+                <button type="button" class="goal-idea-chip" data-name="New Authors" data-unit="authors" data-target="2">New Authors (example: 2 new authors/month)</button>
+                <button type="button" class="goal-idea-chip" data-name="Genres Explored" data-unit="genres" data-target="3">Genres Explored (example: 3 genres/month)</button>
+            </div>
+
+            <form id="custom-goal-form" class="goals-form" autocomplete="off">
+                <label for="custom-goal-name">Goal name</label>
+                <input id="custom-goal-name" name="name" type="text" placeholder="Ex: Pages Read" required>
+
+                <label for="custom-goal-unit">Unit</label>
+                <input id="custom-goal-unit" name="unit" type="text" placeholder="Ex: pages, minutes, authors" required>
+
+                <div class="goals-inline-fields">
+                    <label for="custom-goal-target">Monthly target</label>
+                    <input id="custom-goal-target" name="target" type="number" min="1" step="1" required>
+                </div>
+
+                <div class="goals-inline-fields">
+                    <label for="custom-goal-current">Current progress</label>
+                    <input id="custom-goal-current" name="current" type="number" min="0" step="1" required>
+                </div>
+
+                <button type="submit">Save Second Goal</button>
+            </form>
+
+            <div class="goal-progress-panel" aria-live="polite">
+                <p id="custom-goal-summary" class="goal-summary">No second goal saved yet.</p>
+                <div class="goal-progress-track" role="img" aria-label="Second goal progress">
+                    <div id="custom-goal-progress" class="goal-progress-bar"></div>
+                </div>
+                <p id="custom-goal-percent" class="goal-percent">0% complete</p>
+            </div>
+
+        </section>
+
+        <div class="goals-reset-section">
+            <button id="reset-all-goals" type="button" class="danger-action">Reset All Goals</button>
+        </div>
+    </main>
+
     <script src="main.js"></script>
+    <script src="goals.js"></script>
 
 </body>
 </html>

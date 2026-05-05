@@ -28,7 +28,23 @@
         </ul>
     </nav>
 
+    <main>
+        <section>
+            <h2>My Pages Turned Bookshelf</h2>
+            <p id="pages-turned-status" class="search-status" aria-live="polite">Loading your bookshelf...</p>
+            <div id="pages-turned-shelf" class="bookshelf-grid" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <div id="shelf-review-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="shelf-review-title">
+        <div class="modal-content">
+            <button id="shelf-review-close" class="modal-close" type="button" aria-label="Close review details">Close</button>
+            <div id="shelf-review-body"></div>
+        </div>
+    </div>
+
     <script src="main.js"></script>
+    <script src="pagesTurned.js"></script>
 
 </body>
 </html>
