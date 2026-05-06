@@ -17,6 +17,7 @@ const customCurrentInput = document.getElementById("custom-goal-current");
 const customSummary = document.getElementById("custom-goal-summary");
 const customPercentText = document.getElementById("custom-goal-percent");
 const customProgressBar = document.getElementById("custom-goal-progress");
+const resetAllGoalsButton = document.getElementById("reset-all-goals");
 const ideaChips = Array.from(document.querySelectorAll(".goal-idea-chip"));
 
 function readStoredGoal(key) {
@@ -176,5 +177,28 @@ ideaChips.forEach((chip) => {
         customNameInput.focus();
     });
 });
+
+if (resetAllGoalsButton) {
+    resetAllGoalsButton.addEventListener("click", () => {
+        const shouldReset = confirm("Reset all saved goals and progress?");
+        if (!shouldReset) {
+            return;
+        }
+
+        localStorage.removeItem(MONTHLY_GOAL_KEY);
+        localStorage.removeItem(CUSTOM_GOAL_KEY);
+
+        if (monthlyGoalForm) {
+            monthlyGoalForm.reset();
+        }
+
+        if (customGoalForm) {
+            customGoalForm.reset();
+        }
+
+        renderMonthlyGoal(null);
+        renderCustomGoal(null);
+    });
+}
 
 loadSavedGoalsIntoForms();

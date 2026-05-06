@@ -59,6 +59,13 @@ html {
 	box-sizing: border-box;
 }
 
+button,
+input,
+select,
+textarea {
+	font: inherit;
+}
+
 body {
 	margin: 0;
 	font-family: var(--font-body);
@@ -701,6 +708,17 @@ a:focus-visible {
 	margin-top: 0.7rem;
 }
 
+.shelf-review-detail .detail-cover {
+	width: min(220px, 100%);
+	aspect-ratio: 2 / 3;
+	height: auto;
+	object-fit: cover;
+	object-position: center;
+	justify-self: center;
+	align-self: start;
+	box-shadow: 0 8px 18px rgba(24, 17, 12, 0.28);
+}
+
 .shelf-review-author {
 	margin: 0;
 	color: var(--blue-soft);
@@ -1069,14 +1087,43 @@ a:focus-visible {
 }
 
 .review-delete-btn {
-	border-color: #CDA1B5;
-	color: #FADBE8;
+	border-color: rgba(200, 60, 60, 0.7);
+	background: rgba(140, 30, 30, 0.75);
+	color: var(--text-light);
 }
 
 .review-delete-btn:hover,
 .review-delete-btn:focus-visible {
-	background: var(--delete-bg);
-	color: var(--delete-text);
+	background: rgba(180, 40, 40, 0.95);
+	color: var(--text-light);
+}
+
+.modal-delete-btn {
+	display: inline-block;
+	margin-top: 0.8rem;
+	padding: 0.65rem 0.95rem;
+	border-radius: 9px;
+	border: 1px solid rgba(200, 60, 60, 0.7);
+	background: rgba(140, 30, 30, 0.75);
+	color: var(--text-light);
+	font-weight: 700;
+	font-size: inherit;
+	cursor: pointer;
+	text-decoration: none;
+	box-shadow: 0 9px 16px rgba(59, 16, 16, 0.28), inset 0 1px 0 rgba(255, 214, 214, 0.25);
+	transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-delete-btn:hover,
+.modal-delete-btn:focus-visible {
+	background: rgba(180, 40, 40, 0.95);
+	transform: translateY(-1px);
+	color: var(--text-light);
+	box-shadow: 0 12px 20px rgba(59, 16, 16, 0.34), inset 0 1px 0 rgba(255, 214, 214, 0.3);
+}
+
+.tbr-delete-btn {
+	border-color: rgba(200, 60, 60, 0.7);
 }
 
 .goals-helper-text {
@@ -1264,6 +1311,11 @@ a:focus-visible {
 
 	.shelf-review-detail {
 		grid-template-columns: 1fr;
+	}
+
+	.shelf-review-detail .detail-cover {
+		width: min(220px, 78vw);
+		margin: 0 auto;
 	}
 
 	.book-detail {
