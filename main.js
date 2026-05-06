@@ -58,5 +58,3 @@ const SiteLoader = (() => {
         end
     };
 })();
-
-window.SiteLoader = SiteLoader;

@@ -167,27 +167,6 @@ customGoalForm.addEventListener("submit", (event) => {
     renderCustomGoal(goal);
 });
 
-const resetAllGoalsButton = document.getElementById("reset-all-goals");
-
-if (resetAllGoalsButton) {
-    resetAllGoalsButton.addEventListener("click", () => {
-        if (!confirm("Reset all goals? This will clear your saved progress.")) return;
-
-        localStorage.removeItem(MONTHLY_GOAL_KEY);
-        localStorage.removeItem(CUSTOM_GOAL_KEY);
-
-        monthlyTargetInput.value = "";
-        monthlyCurrentInput.value = "";
-        renderMonthlyGoal(null);
-
-        customNameInput.value = "";
-        customUnitInput.value = "";
-        customTargetInput.value = "";
-        customCurrentInput.value = "";
-        renderCustomGoal(null);
-    });
-}
-
 ideaChips.forEach((chip) => {
     chip.addEventListener("click", () => {
         customNameInput.value = chip.dataset.name || "";

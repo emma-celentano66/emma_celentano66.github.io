@@ -115,6 +115,14 @@ function reviewLinkForBook(book) {
     return `reviews.html?${params.toString()}`;
 }
 
+function deleteBookFromShelf(bookId) {
+    if (!confirm("Remove this book from your shelf?")) return;
+    const stored = getStoredBooks().filter((b) => b.id !== bookId);
+    localStorage.setItem(PAGES_TURNED_STORAGE_KEY, JSON.stringify(stored));
+    closeReviewModal();
+    renderShelf();
+}
+
 function openReviewModal(book) {
     if (!reviewModal || !reviewModalBody) {
         return;
@@ -134,6 +142,7 @@ function openReviewModal(book) {
                     <p class="shelf-review-author">${safeAuthor}</p>
                     <p>No saved review yet for this book.</p>
                     <a class="review-link-button" href="${reviewLinkForBook(book)}">Write a Review</a>
+                    <button class="review-delete-btn modal-delete-btn" type="button">Remove from Shelf</button>
                 </div>
             </article>
         `;
@@ -153,9 +162,15 @@ function openReviewModal(book) {
                     <p class="shelf-review-text">${safeReviewText}</p>
                     <p class="shelf-review-date">${safeReviewDate}</p>
                     <a class="review-link-button" href="${reviewLinkForBook(book)}">Edit in Reviews</a>
+                    <button class="review-delete-btn modal-delete-btn" type="button">Remove from Shelf</button>
                 </div>
             </article>
         `;
+    }
+
+    const deleteBtn = reviewModalBody.querySelector(".modal-delete-btn");
+    if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => deleteBookFromShelf(book.id));
     }
 
     reviewModal.classList.add("open");
@@ -250,5 +265,156 @@ if (reviewModal) {
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && reviewModal && reviewModal.classList.contains("open")) {
         closeReviewModal();
+    }
+});
+
+const TBR_STORAGE_KEY = "turningPagesTBR";
+
+const tbrContainer = document.getElementById("tbr-shelf");
+const tbrStatus = document.getElementById("tbr-status");
+const tbrModal = document.getElementById("tbr-modal");
+const tbrModalBody = document.getElementById("tbr-modal-body");
+const tbrModalClose = document.getElementById("tbr-modal-close");
+
+function getStoredTBRBooks() {
+    try {
+        const raw = localStorage.getItem(TBR_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function deleteTBRBook(bookId) {
+    if (!confirm("Remove this book from your TBR list?")) return;
+    const stored = getStoredTBRBooks().filter((b) => b.id !== bookId);
+    localStorage.setItem(TBR_STORAGE_KEY, JSON.stringify(stored));
+    closeTBRModal();
+    renderTBR();
+}
+
+function moveToPagesTurned(book) {
+    // Add to Pages Turned shelf
+    const shelf = getStoredBooks();
+    const existingIndex = shelf.findIndex((b) => b.id === book.id);
+    const shelfBook = { ...book, addedAt: new Date().toISOString() };
+    if (existingIndex >= 0) shelf.splice(existingIndex, 1);
+    shelf.unshift(shelfBook);
+    localStorage.setItem(PAGES_TURNED_STORAGE_KEY, JSON.stringify(shelf));
+
+    // Remove from TBR
+    const tbr = getStoredTBRBooks().filter((b) => b.id !== book.id);
+    localStorage.setItem(TBR_STORAGE_KEY, JSON.stringify(tbr));
+
+    closeTBRModal();
+    renderShelf();
+    renderTBR();
+}
+
+function openTBRModal(book) {
+    if (!tbrModal || !tbrModalBody) return;
+
+    const safeTitle = escapeHtml(safeText(book.title, "Untitled"));
+    const safeAuthor = escapeHtml(safeText(book.author, "Unknown Author"));
+    const safeCover = escapeHtml(safeText(book.cover, NO_COVER_SRC));
+
+    tbrModalBody.innerHTML = `
+        <article class="shelf-review-detail">
+            <img src="${safeCover}" alt="Cover of ${safeTitle}" class="detail-cover" onerror="this.src='${NO_COVER_SRC}'">
+            <div>
+                <h2 id="tbr-modal-title">${safeTitle}</h2>
+                <p class="shelf-review-author">${safeAuthor}</p>
+                <p class="shelf-book-year">First published: ${escapeHtml(safeText(book.publishYear))}</p>
+                <button class="review-link-button move-to-shelf-btn" type="button">Move to Pages Turned</button>
+                <button class="modal-delete-btn tbr-delete-btn" type="button">Remove from TBR</button>
+            </div>
+        </article>
+    `;
+
+    tbrModalBody.querySelector(".tbr-delete-btn").addEventListener("click", () => deleteTBRBook(book.id));
+    tbrModalBody.querySelector(".move-to-shelf-btn").addEventListener("click", () => moveToPagesTurned(book));
+
+    tbrModal.classList.add("open");
+    tbrModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+}
+
+function closeTBRModal() {
+    if (!tbrModal) return;
+    tbrModal.classList.remove("open");
+    tbrModal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+}
+
+function createTBRCard(book) {
+    const card = document.createElement("article");
+    card.className = "shelf-book-card tbr-card";
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", `View TBR details for ${safeText(book.title, "this book")}`);
+
+    const cover = document.createElement("img");
+    cover.className = "shelf-book-cover";
+    cover.src = safeText(book.cover, NO_COVER_SRC);
+    cover.alt = `Cover of ${safeText(book.title, "Untitled")}`;
+    cover.loading = "lazy";
+    cover.onerror = function () { this.src = NO_COVER_SRC; };
+
+    const title = document.createElement("h3");
+    title.textContent = safeText(book.title, "Untitled");
+
+    const author = document.createElement("p");
+    author.className = "shelf-book-author";
+    author.textContent = `Author: ${safeText(book.author, "Unknown Author")}`;
+
+    const year = document.createElement("p");
+    year.className = "shelf-book-year";
+    year.textContent = `First published: ${safeText(book.publishYear)}`;
+
+    card.addEventListener("click", () => openTBRModal(book));
+    card.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openTBRModal(book);
+        }
+    });
+
+    card.append(cover, title, author, year);
+    return card;
+}
+
+function renderTBR() {
+    if (!tbrContainer || !tbrStatus) return;
+
+    const books = getStoredTBRBooks();
+    tbrContainer.innerHTML = "";
+
+    if (!books.length) {
+        tbrStatus.textContent = "Your TBR list is empty. Add books from Discover.";
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    books.forEach((book) => fragment.appendChild(createTBRCard(book)));
+    tbrContainer.appendChild(fragment);
+    tbrStatus.textContent = `Showing ${books.length} book${books.length === 1 ? "" : "s"} to be read.`;
+}
+
+renderTBR();
+
+if (tbrModalClose) {
+    tbrModalClose.addEventListener("click", closeTBRModal);
+}
+
+if (tbrModal) {
+    tbrModal.addEventListener("click", (event) => {
+        if (event.target === tbrModal) closeTBRModal();
+    });
+}
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && tbrModal && tbrModal.classList.contains("open")) {
+        closeTBRModal();
     }
 });

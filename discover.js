@@ -8,20 +8,20 @@ const modalBody = document.getElementById("modal-body");
 const modalCloseBtn = document.getElementById("modal-close");
 
 const SEARCH_LIMIT = 24;
-const GOOGLE_SEARCH_LIMIT = 40;
 const NO_COVER_SRC = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='300' viewBox='0 0 200 300'%3E%3Crect fill='%239B7A5C' width='200' height='300'/%3E%3Ctext x='100' y='145' font-family='Arial' font-size='14' fill='%23FFF6E8' text-anchor='middle'%3ENo Cover%3C/text%3E%3C/svg%3E";
 const PAGES_TURNED_STORAGE_KEY = "turningPagesBookshelf";
+const TBR_STORAGE_KEY = "turningPagesTBR";
 let modalRequestId = 0;
 
 function beginLoad(message) {
-    if (window.SiteLoader && typeof window.SiteLoader.begin === "function") {
-        window.SiteLoader.begin(message);
+    if (typeof SiteLoader !== "undefined" && typeof SiteLoader.begin === "function") {
+        SiteLoader.begin(message);
     }
 }
 
 function endLoad() {
-    if (window.SiteLoader && typeof window.SiteLoader.end === "function") {
-        window.SiteLoader.end();
+    if (typeof SiteLoader !== "undefined" && typeof SiteLoader.end === "function") {
+        SiteLoader.end();
     }
 }
 
@@ -88,9 +88,6 @@ function getStoredPagesTurnedBooks() {
 }
 
 function normalizeBookId(doc) {
-    if (doc.source === "google" && doc.googleVolumeId) {
-        return `google:${doc.googleVolumeId}`;
-    }
     if (doc.key) {
         return `openlibrary:${doc.key}`;
     }
@@ -127,14 +124,40 @@ function addToPagesTurnedAndRedirect(doc) {
     window.location.href = "pagesTurned.html";
 }
 
+function saveBookToTBR(doc) {
+    try {
+        const raw = localStorage.getItem(TBR_STORAGE_KEY);
+        const stored = (() => { try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch { return []; } })();
+        const bookId = normalizeBookId(doc);
+        const existingIndex = stored.findIndex((b) => b.id === bookId);
+        const tbrBook = {
+            id: bookId,
+            title: sanitizeText(doc.title),
+            author: sanitizeText(asArray(doc.author_name).join(", ")),
+            publishYear: sanitizeText(getPublishYear(doc) || doc.first_publish_year),
+            cover: coverUrlFromDoc(doc, "M"),
+            addedAt: new Date().toISOString()
+        };
+        if (existingIndex >= 0) stored.splice(existingIndex, 1);
+        stored.unshift(tbrBook);
+        localStorage.setItem(TBR_STORAGE_KEY, JSON.stringify(stored));
+    } catch (error) {}
+}
+
+function addToTBRAndRedirect(doc) {
+    saveBookToTBR(doc);
+    window.location.href = "pagesTurned.html";
+}
+
 function setStatus(message) {
     searchStatus.textContent = message;
 }
 
-function createBookCard(doc) {
+function createBookCard(doc, index = 0) {
     const card = document.createElement("article");
     card.className = "book-card";
     card.dataset.key = doc.key || "";
+    card.style.setProperty("--card-index", String(index));
 
     const cover = document.createElement("img");
     cover.src = coverUrlFromDoc(doc, "M");
@@ -170,7 +193,13 @@ function createBookCard(doc) {
     addButton.textContent = "Add to Pages Turned";
     addButton.addEventListener("click", () => addToPagesTurnedAndRedirect(doc));
 
-    actions.append(detailsButton, addButton);
+    const tbrButton = document.createElement("button");
+    tbrButton.type = "button";
+    tbrButton.className = "book-card-action add-tbr-button";
+    tbrButton.textContent = "Add to TBR";
+    tbrButton.addEventListener("click", () => addToTBRAndRedirect(doc));
+
+    actions.append(detailsButton, addButton, tbrButton);
     card.append(cover, title, author, year, actions);
 
     return card;
@@ -185,8 +214,8 @@ function renderCards(docs) {
     }
 
     const fragment = document.createDocumentFragment();
-    docs.forEach((doc) => {
-        fragment.appendChild(createBookCard(doc));
+    docs.forEach((doc, index) => {
+        fragment.appendChild(createBookCard(doc, index));
     });
 
     resultsContainer.appendChild(fragment);
@@ -233,88 +262,6 @@ function normalizeOpenLibraryDoc(doc) {
         has_fulltext: Boolean(doc.has_fulltext),
         ebook_access: doc.ebook_access || ""
     };
-}
-
-function normalizeGoogleBookItem(item) {
-    const volumeInfo = item.volumeInfo || {};
-    const saleInfo = item.saleInfo || {};
-    const accessInfo = item.accessInfo || {};
-    const matchedYear = String(volumeInfo.publishedDate || "").match(/\d{4}/);
-    const imageLinks = volumeInfo.imageLinks || {};
-    const industryIdentifiers = Array.isArray(volumeInfo.industryIdentifiers)
-        ? volumeInfo.industryIdentifiers
-        : [];
-    const isbnValues = industryIdentifiers.map((entry) => entry.identifier).filter(Boolean);
-
-    const rawCover = imageLinks.thumbnail || imageLinks.smallThumbnail || "";
-    const secureCover = rawCover.startsWith("http://") ? rawCover.replace("http://", "https://") : rawCover;
-
-    return {
-        source: "google",
-        key: `/google/${item.id || ""}`,
-        googleVolumeId: item.id || "",
-        title: volumeInfo.title || "Untitled",
-        author_name: Array.isArray(volumeInfo.authors) ? volumeInfo.authors : [],
-        first_publish_year: matchedYear ? Number(matchedYear[0]) : "Not available",
-        first_publish_date: volumeInfo.publishedDate || "",
-        edition_count: volumeInfo.pageCount || "Not available",
-        language: volumeInfo.language ? [volumeInfo.language] : [],
-        publisher: volumeInfo.publisher ? [volumeInfo.publisher] : [],
-        isbn: isbnValues,
-        subject: Array.isArray(volumeInfo.categories) ? volumeInfo.categories : [],
-        description: volumeInfo.description || "",
-        cover_url: secureCover,
-        average_rating: typeof volumeInfo.averageRating === "number" ? volumeInfo.averageRating : 0,
-        ratings_count: typeof volumeInfo.ratingsCount === "number" ? volumeInfo.ratingsCount : 0,
-        preview_link: volumeInfo.previewLink || "",
-        info_link: volumeInfo.infoLink || "",
-        page_count: typeof volumeInfo.pageCount === "number" ? volumeInfo.pageCount : 0,
-        saleability: saleInfo.saleability || "",
-        viewability: accessInfo.viewability || ""
-    };
-}
-
-function getGoogleBookQualityScore(book) {
-    const publishYear = getPublishYear(book) || 0;
-    const recencyScore = Math.max(0, publishYear - 2000);
-    const ratingSignal = Math.min(book.ratings_count || 0, 500);
-    const averageRatingScore = Math.round((book.average_rating || 0) * 12);
-
-    let score = 0;
-
-    if (book.cover_url) {
-        score += 120;
-    }
-    if (book.description) {
-        score += 35;
-    }
-    if (book.publisher && book.publisher.length) {
-        score += 20;
-    }
-    if (book.author_name && book.author_name.length) {
-        score += 15;
-    }
-    if (book.subject && book.subject.length) {
-        score += 12;
-    }
-    if (book.preview_link) {
-        score += 10;
-    }
-    if (book.page_count >= 120) {
-        score += 8;
-    }
-    if (book.viewability && book.viewability !== "NO_PAGES") {
-        score += 8;
-    }
-    if (book.saleability && book.saleability !== "NOT_FOR_SALE") {
-        score += 4;
-    }
-
-    score += recencyScore;
-    score += averageRatingScore;
-    score += Math.min(40, Math.round(ratingSignal / 10));
-
-    return score;
 }
 
 function getPublishYear(book) {
@@ -400,47 +347,6 @@ function genreToSubjectSlug(genre) {
 
 async function fetchSearchResults(query, genre) {
     return fetchOpenLibrarySearchResults(query, genre);
-}
-
-async function fetchGoogleSearchResults(query, genre) {
-    const queryParts = [];
-
-    if (query) {
-        queryParts.push(`(${query})`);
-    }
-
-    if (genre) {
-        queryParts.push(`subject:${genre}`);
-    }
-
-    if (!queryParts.length) {
-        return [];
-    }
-
-    const params = new URLSearchParams({
-        q: queryParts.join(" "),
-        maxResults: String(GOOGLE_SEARCH_LIMIT),
-        orderBy: "newest",
-        printType: "books",
-        projection: "full",
-        langRestrict: "en"
-    });
-
-    const response = await fetch(`https://www.googleapis.com/books/v1/volumes?${params.toString()}`);
-
-    if (!response.ok) {
-        throw new Error("Google search failed");
-    }
-
-    const data = await response.json();
-    const items = Array.isArray(data.items) ? data.items : [];
-
-    const books = items
-        .map(normalizeGoogleBookItem);
-
-    return books
-        .sort((left, right) => getGoogleBookQualityScore(right) - getGoogleBookQualityScore(left))
-        .slice(0, SEARCH_LIMIT);
 }
 
 async function fetchOpenLibrarySearchResults(query, genre) {
@@ -544,6 +450,7 @@ function renderModalContent(doc, description, subjectList) {
                     ${detailItem("Subjects", safeSubjects)}
                 </ul>
                 <button class="review-link-button add-pages-turned-button modal-add-pages-turned" type="button" data-book-id="${escapeHtml(modalBookId)}">Add to Pages Turned</button>
+                <button class="review-link-button add-tbr-button modal-add-tbr" type="button">Add to TBR</button>
                 <a class="review-link-button" href="${reviewLink}">Leave a Review</a>
             </div>
         </article>
@@ -561,6 +468,11 @@ function renderModalContent(doc, description, subjectList) {
     if (addToPagesTurnedButton) {
         addToPagesTurnedButton.addEventListener("click", () => addToPagesTurnedAndRedirect(doc));
     }
+
+    const addToTBRButton = modalBody.querySelector(".modal-add-tbr");
+    if (addToTBRButton) {
+        addToTBRButton.addEventListener("click", () => addToTBRAndRedirect(doc));
+    }
 }
 
 async function getWorkDetails(workKey) {
@@ -570,22 +482,6 @@ async function getWorkDetails(workKey) {
 
     try {
         const response = await fetch(`https://openlibrary.org${workKey}.json`);
-        if (!response.ok) {
-            return null;
-        }
-        return await response.json();
-    } catch (error) {
-        return null;
-    }
-}
-
-async function getGoogleVolumeDetails(volumeId) {
-    if (!volumeId) {
-        return null;
-    }
-
-    try {
-        const response = await fetch(`https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(volumeId)}`);
         if (!response.ok) {
             return null;
         }
@@ -606,30 +502,6 @@ async function openBookModal(doc) {
     beginLoad("Opening book details...");
 
     try {
-        if (doc.source === "google") {
-            const volumeDetails = await getGoogleVolumeDetails(doc.googleVolumeId);
-
-            if (requestId !== modalRequestId || !modal.classList.contains("open")) {
-                return;
-            }
-
-            const volumeInfo = volumeDetails?.volumeInfo || {};
-            const description = volumeInfo.description || doc.description || "No description available.";
-            const subjectList = Array.isArray(volumeInfo.categories)
-                ? volumeInfo.categories.slice(0, 12)
-                : asArray(doc.subject).slice(0, 12);
-
-            const detailDoc = {
-                ...doc,
-                publisher: volumeInfo.publisher ? [volumeInfo.publisher] : doc.publisher,
-                language: volumeInfo.language ? [volumeInfo.language] : doc.language,
-                subject: subjectList
-            };
-
-            renderModalContent(detailDoc, description, subjectList);
-            return;
-        }
-
         const workDetails = await getWorkDetails(doc.key);
 
         if (requestId !== modalRequestId || !modal.classList.contains("open")) {

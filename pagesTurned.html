@@ -6,7 +6,7 @@
     <title>Pages Turned - Turning Pages</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="is-loading">
+<body class="is-loading serif-everywhere">
 
     <div id="site-loader" class="global-loader" role="status" aria-live="polite" aria-hidden="false">
         <div class="book-loader" aria-hidden="true">
@@ -18,15 +18,17 @@
         <p id="site-loader-text" class="loader-text">Turning pages...</p>
     </div>
 
-    <nav>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="discover.html">Discover</a></li>
-            <li><a href="reviews.html">Reviews</a></li>
-            <li><a href="pagesTurned.html" class="active">Pages Turned</a></li>
-            <li><a href="goals.html">Goals</a></li>
-        </ul>
-    </nav>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="discover.html">Discover</a></li>
+                <li><a href="reviews.html">Reviews</a></li>
+                <li><a href="pagesTurned.html" class="active">Pages Turned</a></li>
+                <li><a href="goals.html">Goals</a></li>
+            </ul>
+        </nav>
+    </header>
 
     <main>
         <section>
@@ -34,12 +36,25 @@
             <p id="pages-turned-status" class="search-status" aria-live="polite">Loading your bookshelf...</p>
             <div id="pages-turned-shelf" class="bookshelf-grid" aria-live="polite"></div>
         </section>
+
+        <section>
+            <h2>My TBR List</h2>
+            <p id="tbr-status" class="search-status" aria-live="polite">Loading your TBR list...</p>
+            <div id="tbr-shelf" class="bookshelf-grid" aria-live="polite"></div>
+        </section>
     </main>
 
     <div id="shelf-review-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="shelf-review-title">
         <div class="modal-content">
             <button id="shelf-review-close" class="modal-close" type="button" aria-label="Close review details">Close</button>
             <div id="shelf-review-body"></div>
+        </div>
+    </div>
+
+    <div id="tbr-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="tbr-modal-title">
+        <div class="modal-content">
+            <button id="tbr-modal-close" class="modal-close" type="button" aria-label="Close TBR details">Close</button>
+            <div id="tbr-modal-body"></div>
         </div>
     </div>
 

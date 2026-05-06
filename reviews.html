@@ -6,7 +6,7 @@
     <title>Reviews - Turning Pages</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="is-loading">
+<body class="is-loading serif-everywhere">
 
     <div id="site-loader" class="global-loader" role="status" aria-live="polite" aria-hidden="false">
         <div class="book-loader" aria-hidden="true">
@@ -18,15 +18,17 @@
         <p id="site-loader-text" class="loader-text">Turning pages...</p>
     </div>
 
-    <nav>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="discover.html">Discover</a></li>
-            <li><a href="reviews.html" class="active">Reviews</a></li>
-            <li><a href="pagesTurned.html">Pages Turned</a></li>
-            <li><a href="goals.html">Goals</a></li>
-        </ul>
-    </nav>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="discover.html">Discover</a></li>
+                <li><a href="reviews.html" class="active">Reviews</a></li>
+                <li><a href="pagesTurned.html">Pages Turned</a></li>
+                <li><a href="goals.html">Goals</a></li>
+            </ul>
+        </nav>
+    </header>
 
     <main>
         <section>
@@ -38,10 +40,10 @@
                 <input id="review-cover-url" name="coverUrl" type="hidden">
 
                 <label for="review-book-title">Book Title</label>
-                <input id="review-book-title" name="title" type="text" required>
+                <input id="review-book-title" name="title" type="text" maxlength="200" required>
 
                 <label for="review-book-author">Author</label>
-                <input id="review-book-author" name="author" type="text" required>
+                <input id="review-book-author" name="author" type="text" maxlength="200" required>
 
                 <label id="review-rating-label" for="review-rating">Rating</label>
                 <input id="review-rating" name="rating" type="hidden" value="">
@@ -55,7 +57,7 @@
                 <p id="star-rating-status" class="star-rating-status" aria-live="polite">No rating selected</p>
 
                 <label for="review-text">Review</label>
-                <textarea id="review-text" name="review" rows="5" placeholder="Share your thoughts..." required></textarea>
+                <textarea id="review-text" name="review" rows="5" maxlength="2000" placeholder="Share your thoughts..." required></textarea>
 
                 <div class="review-form-actions">
                     <button id="review-submit-btn" type="submit">Save Review</button>
