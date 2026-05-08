@@ -7,7 +7,6 @@ const SiteLoader = (() => {
         return {
             show() {},
             hide() {},
-            setMessage() {},
             begin() {},
             end() {}
         };
@@ -53,8 +52,41 @@ const SiteLoader = (() => {
     return {
         show,
         hide,
-        setMessage,
         begin,
         end
+    };
+})();
+
+const SiteToast = (() => {
+    let toastEl = null;
+    let hideTimer = 0;
+
+    function getToastEl() {
+        if (toastEl) {
+            return toastEl;
+        }
+
+        toastEl = document.createElement("div");
+        toastEl.className = "site-toast";
+        toastEl.setAttribute("role", "status");
+        toastEl.setAttribute("aria-live", "polite");
+        toastEl.setAttribute("aria-atomic", "true");
+        document.body.appendChild(toastEl);
+        return toastEl;
+    }
+
+    function show(message, duration = 1600) {
+        const el = getToastEl();
+        el.textContent = String(message || "Done");
+        el.classList.add("show");
+
+        window.clearTimeout(hideTimer);
+        hideTimer = window.setTimeout(() => {
+            el.classList.remove("show");
+        }, duration);
+    }
+
+    return {
+        show
     };
 })();

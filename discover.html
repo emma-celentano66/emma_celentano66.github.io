@@ -55,8 +55,19 @@
                 </div>
             </form>
 
-            <p id="search-status" class="search-status" aria-live="polite">Enter a search term, pick a genre, or both.</p>
+            <div class="discover-controls">
+                <p id="search-status" class="search-status" aria-live="polite">Enter a search term, pick a genre, or both.</p>
+                <label class="sort-control" for="book-sort-input">
+                    Sort by
+                    <select id="book-sort-input" name="sort">
+                        <option value="relevance">Relevance</option>
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                    </select>
+                </label>
+            </div>
             <div id="book-results" class="book-results" aria-live="polite"></div>
+            <p class="discover-source-note">Powered by Open Library data.</p>
         </section>
     </main>
 

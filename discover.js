@@ -1,6 +1,7 @@
 const searchForm = document.getElementById("book-search-form");
 const searchInput = document.getElementById("book-search-input");
 const genreInput = document.getElementById("book-genre-input");
+const sortInput = document.getElementById("book-sort-input");
 const searchStatus = document.getElementById("search-status");
 const resultsContainer = document.getElementById("book-results");
 const modal = document.getElementById("book-modal");
@@ -12,6 +13,8 @@ const NO_COVER_SRC = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
 const PAGES_TURNED_STORAGE_KEY = "turningPagesBookshelf";
 const TBR_STORAGE_KEY = "turningPagesTBR";
 let modalRequestId = 0;
+let latestResults = [];
+let pendingRedirectTimer = 0;
 
 function beginLoad(message) {
     if (typeof SiteLoader !== "undefined" && typeof SiteLoader.begin === "function") {
@@ -22,6 +25,12 @@ function beginLoad(message) {
 function endLoad() {
     if (typeof SiteLoader !== "undefined" && typeof SiteLoader.end === "function") {
         SiteLoader.end();
+    }
+}
+
+function showToast(message) {
+    if (typeof SiteToast !== "undefined" && typeof SiteToast.show === "function") {
+        SiteToast.show(message);
     }
 }
 
@@ -87,6 +96,16 @@ function getStoredPagesTurnedBooks() {
     }
 }
 
+function getStoredTBRBooks() {
+    try {
+        const raw = localStorage.getItem(TBR_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        return [];
+    }
+}
+
 function normalizeBookId(doc) {
     if (doc.key) {
         return `openlibrary:${doc.key}`;
@@ -100,7 +119,11 @@ function normalizeBookId(doc) {
 function saveBookToPagesTurned(doc) {
     const stored = getStoredPagesTurnedBooks();
     const bookId = normalizeBookId(doc);
-    const existingIndex = stored.findIndex((book) => book.id === bookId);
+    const alreadyExists = stored.some((book) => book.id === bookId);
+
+    if (alreadyExists) {
+        return false;
+    }
 
     const shelfBook = {
         id: bookId,
@@ -111,46 +134,84 @@ function saveBookToPagesTurned(doc) {
         addedAt: new Date().toISOString()
     };
 
-    if (existingIndex >= 0) {
-        stored.splice(existingIndex, 1);
-    }
-
     stored.unshift(shelfBook);
     localStorage.setItem(PAGES_TURNED_STORAGE_KEY, JSON.stringify(stored));
+    return true;
 }
 
 function addToPagesTurnedAndRedirect(doc) {
-    saveBookToPagesTurned(doc);
-    window.location.href = "pagesTurned.html";
+    const wasAdded = saveBookToPagesTurned(doc);
+
+    if (!wasAdded) {
+        showToast("Already in Pages Turned");
+        window.clearTimeout(pendingRedirectTimer);
+        return;
+    }
+
+    showToast("Added to Pages Turned");
+    window.clearTimeout(pendingRedirectTimer);
+    pendingRedirectTimer = window.setTimeout(() => {
+        window.location.href = "pagesTurned.html";
+    }, 550);
 }
 
 function saveBookToTBR(doc) {
-    try {
-        const raw = localStorage.getItem(TBR_STORAGE_KEY);
-        const stored = (() => { try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch { return []; } })();
-        const bookId = normalizeBookId(doc);
-        const existingIndex = stored.findIndex((b) => b.id === bookId);
-        const tbrBook = {
-            id: bookId,
-            title: sanitizeText(doc.title),
-            author: sanitizeText(asArray(doc.author_name).join(", ")),
-            publishYear: sanitizeText(getPublishYear(doc) || doc.first_publish_year),
-            cover: coverUrlFromDoc(doc, "M"),
-            addedAt: new Date().toISOString()
-        };
-        if (existingIndex >= 0) stored.splice(existingIndex, 1);
-        stored.unshift(tbrBook);
-        localStorage.setItem(TBR_STORAGE_KEY, JSON.stringify(stored));
-    } catch (error) {}
+    const stored = getStoredTBRBooks();
+    const bookId = normalizeBookId(doc);
+    const alreadyExists = stored.some((book) => book.id === bookId);
+
+    if (alreadyExists) {
+        return false;
+    }
+
+    const tbrBook = {
+        id: bookId,
+        title: sanitizeText(doc.title),
+        author: sanitizeText(asArray(doc.author_name).join(", ")),
+        publishYear: sanitizeText(getPublishYear(doc) || doc.first_publish_year),
+        cover: coverUrlFromDoc(doc, "M"),
+        addedAt: new Date().toISOString()
+    };
+
+    stored.unshift(tbrBook);
+    localStorage.setItem(TBR_STORAGE_KEY, JSON.stringify(stored));
+    return true;
 }
 
 function addToTBRAndRedirect(doc) {
-    saveBookToTBR(doc);
-    window.location.href = "pagesTurned.html";
+    const wasAdded = saveBookToTBR(doc);
+
+    if (!wasAdded) {
+        showToast("Already in TBR");
+        window.clearTimeout(pendingRedirectTimer);
+        return;
+    }
+
+    showToast("Added to TBR");
+    window.clearTimeout(pendingRedirectTimer);
+    pendingRedirectTimer = window.setTimeout(() => {
+        window.location.href = "pagesTurned.html";
+    }, 550);
 }
 
 function setStatus(message) {
     searchStatus.textContent = message;
+}
+
+function getYearForSort(book) {
+    const year = getPublishYear(book);
+    return Number.isFinite(year) ? year : null;
+}
+
+function sortBooks(books) {
+    const mode = sortInput ? sortInput.value : "relevance";
+    if (mode === "newest") {
+        return books.slice().sort((a, b) => (getYearForSort(b) || -Infinity) - (getYearForSort(a) || -Infinity));
+    }
+    if (mode === "oldest") {
+        return books.slice().sort((a, b) => (getYearForSort(a) || Infinity) - (getYearForSort(b) || Infinity));
+    }
+    return books.slice();
 }
 
 function createBookCard(doc, index = 0) {
@@ -206,6 +267,7 @@ function createBookCard(doc, index = 0) {
 }
 
 function renderCards(docs) {
+    latestResults = docs.slice();
     clearResults();
 
     if (!docs.length) {
@@ -214,12 +276,13 @@ function renderCards(docs) {
     }
 
     const fragment = document.createDocumentFragment();
-    docs.forEach((doc, index) => {
+    const sortedDocs = sortBooks(docs);
+    sortedDocs.forEach((doc, index) => {
         fragment.appendChild(createBookCard(doc, index));
     });
 
     resultsContainer.appendChild(fragment);
-    setStatus(`Showing ${docs.length} result${docs.length === 1 ? "" : "s"}.`);
+    setStatus(`Showing ${sortedDocs.length} result${sortedDocs.length === 1 ? "" : "s"}.`);
 }
 
 function normalizeTrendingWork(work) {
@@ -432,7 +495,6 @@ function renderModalContent(doc, description, subjectList) {
     const safeSubjects = subjectList.length ? subjectList.join(", ") : "Not available";
     const reviewLink = reviewLinkForDoc(doc);
     const coverUrl = coverUrlFromDoc(doc, "L");
-    const modalBookId = normalizeBookId(doc);
 
     modalBody.innerHTML = `
         <article class="book-detail">
@@ -449,9 +511,11 @@ function renderModalContent(doc, description, subjectList) {
                     ${detailItem("ISBN(s)", asArray(doc.isbn).slice(0, 5))}
                     ${detailItem("Subjects", safeSubjects)}
                 </ul>
-                <button class="review-link-button add-pages-turned-button modal-add-pages-turned" type="button" data-book-id="${escapeHtml(modalBookId)}">Add to Pages Turned</button>
-                <button class="review-link-button add-tbr-button modal-add-tbr" type="button">Add to TBR</button>
-                <a class="review-link-button" href="${reviewLink}">Leave a Review</a>
+                <div class="discover-modal-actions">
+                    <button class="review-link-button add-pages-turned-button modal-add-pages-turned" type="button">Add to Pages Turned</button>
+                    <button class="review-link-button add-tbr-button modal-add-tbr" type="button">Add to TBR</button>
+                    <a class="review-link-button" href="${reviewLink}">Leave a Review</a>
+                </div>
             </div>
         </article>
     `;
@@ -574,3 +638,11 @@ document.addEventListener("keydown", (event) => {
         closeModal();
     }
 });
+
+if (sortInput) {
+    sortInput.addEventListener("change", () => {
+        if (latestResults.length) {
+            renderCards(latestResults);
+        }
+    });
+}
